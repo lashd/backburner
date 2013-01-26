@@ -116,6 +116,9 @@ module Backburner
       self.log_error self.exception_message(e)
     rescue => e # Error occurred processing job
       self.log_error self.exception_message(e)
+
+      return unless job
+
       num_retries = job.stats.releases
       retry_status = "failed: attempt #{num_retries+1} of #{config.max_job_retries+1}"
       if num_retries < config.max_job_retries # retry again

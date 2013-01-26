@@ -228,8 +228,21 @@ describe "Backburner::Workers::Basic module" do
       refute_match(/HookFailError/, out)
     end # stopping perform
 
+    it "should support errors when trying to reserve a job by only logging the exception" do
+      stringio = StringIO.new
+      Backburner.configure { |config| config.logger = Logger.new(stringio) }
+
+      worker = @worker_class.new('foo.bar')
+
+      error_message = "reservation error"
+      worker.class.connection.tubes.expects(:reserve).raises(RuntimeError, error_message)
+      worker.work_one_job
+
+      assert_match(error_message, stringio.string)
+    end
+
     after do
-      Backburner.configure { |config| config.max_job_retries = 0; config.retry_delay = 5 }
+      Backburner.configure { |config| config.max_job_retries = 0; config.retry_delay = 5; config.logger = nil }
     end
   end # work_one_job
 end # Worker
